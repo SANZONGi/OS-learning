@@ -131,6 +131,7 @@ allocproc(void) {
         release(&p->lock);
         return 0;
     }
+
     // An empty user page table.
     p->pagetable = proc_pagetable(p);
     if (p->pagetable == 0) {
@@ -145,6 +146,7 @@ allocproc(void) {
     memset(&p->context, 0, sizeof(p->context));
     p->context.ra = (uint64) forkret;
     p->context.sp = p->kstack + PGSIZE;
+    //store pid on USYSCALL
     p->usyscall->pid = p->pid;
     return p;
 }
@@ -200,6 +202,8 @@ proc_pagetable(struct proc *p) {
         uvmfree(pagetable, 0);
         return 0;
     }
+
+    // map the shared area just below TRAPFRAME, for share struct usyscall.
     if (mappages(pagetable, USYSCALL, PGSIZE,
                  (uint64) (p->usyscall), PTE_U | PTE_R) < 0) {
         uvmunmap(pagetable, TRAMPOLINE, 1, 0);
@@ -217,6 +221,7 @@ void
 proc_freepagetable(pagetable_t pagetable, uint64 sz) {
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
     uvmunmap(pagetable, TRAPFRAME, 1, 0);
+    uvmunmap(pagetable, USYSCALL, 1, 0);        //freepagetable of USYSCALL ,otherwise the system will panic
     uvmfree(pagetable, sz);
 }
 

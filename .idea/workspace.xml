@@ -11,7 +11,11 @@
   <component name="ChangeListManager">
     <list default="true" id="937b3f4f-a22b-4710-83f8-502dd9c98b88" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kernel/proc.c" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/proc.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/grade-lab-pgtbl" beforeDir="false" afterPath="$PROJECT_DIR$/grade-lab-pgtbl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kernel/defs.h" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/defs.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kernel/exec.c" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/exec.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kernel/riscv.h" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/riscv.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kernel/vm.c" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/vm.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +59,9 @@
       <workItem from="1639478629491" duration="6543000" />
       <workItem from="1639738945251" duration="123000" />
       <workItem from="1639912822345" duration="3752000" />
-      <workItem from="1640077178713" duration="1047000" />
+      <workItem from="1640077178713" duration="2545000" />
+      <workItem from="1640081824682" duration="350000" />
+      <workItem from="1640082468389" duration="3525000" />
     </task>
     <servers />
   </component>

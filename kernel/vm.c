@@ -281,6 +281,31 @@ freewalk(pagetable_t pagetable)
   kfree((void*)pagetable);
 }
 
+//print PTEs
+void
+vmprint(pagetable_t pagetable, uint64 step)
+{
+    if(step == 0)
+        printf("page table %p\n",pagetable);
+    //i is the index of PTE,
+    //one pagetable can contain 512 ptes
+  for(int i = 0;i < 512; i++){
+  	pte_t pte = pagetable[i];
+  	//if valid
+	if(pte & PTE_V){
+		uint64 child = PTE2PA(pte);
+		for(int i = 0;i < step; i++){
+            printf(".. ");
+        }
+		printf("..%d: ",i);
+        printf("pte %p pa %p\n",pte,PTE2PA(pte));
+        //没有read,write,exec权限说明是下一条页表的入口
+		if((pte&(PTE_R|PTE_W|PTE_X))==0)
+		vmprint((pagetable_t)child,step+1);
+	}
+  }
+}
+
 // Free user memory pages,
 // then free page-table pages.
 void

@@ -363,4 +363,5 @@ sfence_vma()
 #define MAXVA (1L << (9 + 9 + 9 + 12 - 1))
 
 typedef uint64 pte_t;
+//one pte is 8 Byte, and PGSIZE = 8 * 512 = 4096
 typedef uint64 *pagetable_t; // 512 PTEs

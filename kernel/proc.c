@@ -43,6 +43,36 @@ proc_mapstacks(pagetable_t kpgtbl) {
     }
 }
 
+//check pages in range if have been accessed.
+uint64
+pgaccess(void *startpg, int num, void *uaddr){
+    struct proc *p = myproc();
+    int mask = 0;
+    vmprint(p->pagetable,0);
+    //the va is continuous on vm, just for
+    for(int i = 0;i < num;i++){
+        pte_t *pte;
+
+        //get pte
+        pte = walk(p->pagetable,(uint64)startpg+i*(uint64)PGSIZE,0);
+
+        if(*pte&PTE_A) {
+            printf("%d\n",i);
+            mask |= (1L<<i);
+            *pte ^= PTE_A;
+        }
+    }
+
+    if(mask < 0){
+        return -1;
+    }
+    if(copyout(p->pagetable,(uint64)uaddr,(char *)&mask,sizeof(int)) < 0){
+        return -1;
+    }
+    return 0;
+}
+
+
 // initialize the proc table at boot time.
 void
 procinit(void) {

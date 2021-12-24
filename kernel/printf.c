@@ -118,6 +118,7 @@ void
 panic(char *s)
 {
   pr.locking = 0;
+  backtrace();
   printf("panic: ");
   printf(s);
   printf("\n");
@@ -131,4 +132,23 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+void
+backtrace(void){
+    printf("backtrace:\n");
+    //fp是当前栈帧的帧指针(一个函数栈的底部)，prv_fp在更高的地址，因为栈是从高到低增长
+    uint64 fp = r_fp();
+
+    uint64 up = PGROUNDUP(fp);
+
+    //Xv6 allocates one page for each stack in the xv6 kernel at PAGE-aligned address.
+    while(fp < up){
+        //return address fp - 8,
+        //first turn fp - 8 to uint64 address
+        //then get the value on address (fp - 8)
+        printf("%p\n",*((uint64*)(fp - 8)));
+        //prev fp fp - 64
+        fp = *((uint64*)(fp - 16));
+    }
+
 }

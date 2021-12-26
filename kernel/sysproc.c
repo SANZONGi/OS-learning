@@ -8,6 +8,35 @@
 #include "proc.h"
 
 uint64
+sys_sigalarm(void){
+    int interval;
+    uint64 handler;
+    if(argint(0,&interval) < 0){
+        return -1;
+    }
+
+    if(argaddr(1,&handler) < 0) {
+        return -1;
+    }
+    myproc()->interval = interval;
+    myproc()->handler = handler;
+    myproc()->alarmret = 0;
+    return 0;
+}
+
+uint64
+sys_sigreturn(void){
+    struct proc *p = myproc();
+    if(p->alarmret != 0){
+        memmove(p->trapframe,p->alarmret,512);
+        kfree(p->alarmret);
+        p->alarmret = 0;
+    }
+
+    return 0;
+}
+
+uint64
 sys_exit(void)
 {
   int n;

@@ -114,7 +114,6 @@ sys_fstat(void)
     return -1;
   return filestat(f, st);
 }
-
 // Create the path new as a link to the same inode as old.
 uint64
 sys_link(void)
@@ -164,6 +163,7 @@ bad:
   end_op();
   return -1;
 }
+
 
 // Is the directory dp empty except for "." and ".." ?
 static int
@@ -322,7 +322,31 @@ sys_open(void)
     return -1;
   }
 
-  if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
+    if(ip->type == T_SYMLINK){
+        if(!(omode & O_NOFOLLOW)){
+            int cycle = 0;
+            char target[MAXPATH];
+            while(ip->type == T_SYMLINK){
+                if(cycle == 10){
+                    iunlockput(ip);
+                    end_op();
+                    return -1; // max cycle
+                }
+                cycle++;
+                memset(target, 0, sizeof(target));
+                readi(ip, 0, (uint64)target, 0, MAXPATH);
+                iunlockput(ip);
+                if((ip = namei(target)) == 0){
+                    end_op();
+                    return -1; // target not exist
+                }
+                ilock(ip);
+            }
+        }
+    }
+
+
+    if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
     if(f)
       fileclose(f);
     iunlockput(ip);
@@ -393,7 +417,7 @@ sys_chdir(void)
   char path[MAXPATH];
   struct inode *ip;
   struct proc *p = myproc();
-  
+
   begin_op();
   if(argstr(0, path, MAXPATH) < 0 || (ip = namei(path)) == 0){
     end_op();
@@ -483,4 +507,36 @@ sys_pipe(void)
     return -1;
   }
   return 0;
+}
+
+uint64
+sys_symlink(void) {
+    char path[MAXPATH];
+    char target[MAXPATH];
+    if (argstr(0,target,MAXPATH) < 0) {
+        return -1;
+    }
+    if (argstr(1,path,MAXPATH) < 0) {
+        return -1;
+    }
+    struct inode *ip;
+    begin_op();
+
+
+    if((ip = create(path,T_SYMLINK,0,0)) == 0)
+    {
+        end_op();
+        return -1;
+    }
+    ilock(ip);
+    //
+    if(writei(ip,0,(uint64)target,0,MAXPATH) != MAXPATH) {
+        return -1;
+    }
+
+    iunlock(ip);
+
+    end_op();
+
+    return 0;
 }

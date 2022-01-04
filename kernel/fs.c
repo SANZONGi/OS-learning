@@ -401,6 +401,31 @@ bmap(struct inode *ip, uint bn)
     return addr;
   }
 
+  bn -= NINDIRECT;
+    if(bn < NDOUBLEINDIRECT){
+        uint lvl1 = bn / NINDIRECT;
+        uint lvl2 = bn % NINDIRECT;
+        // Load double-indirect block, allocating if necessary.
+        if((addr = ip->addrs[NINDIRECT]) == 0)
+            ip->addrs[NINDIRECT] = addr = balloc(ip->dev);
+        bp = bread(ip->dev, addr);
+        a = (uint*)bp->data;
+        if((addr = a[lvl1]) == 0){
+            a[lvl1] = addr = balloc(ip->dev);
+            log_write(bp);
+        }
+        brelse(bp);
+
+        bp = bread(ip->dev, addr);
+        a = (uint*)bp->data;
+        if((addr = a[lvl2]) == 0){
+            a[lvl2] = addr = balloc(ip->dev);
+            log_write(bp);
+        }
+        brelse(bp);
+        return addr;
+    }
+
   panic("bmap: out of range");
 }
 
@@ -483,6 +508,7 @@ readi(struct inode *ip, int user_dst, uint64 dst, uint off, uint n)
 // Returns the number of bytes successfully written.
 // If the return value is less than the requested n,
 // there was an error of some kind.
+//src : string   off : 数据位置偏移量   n : 读取大小
 int
 writei(struct inode *ip, int user_src, uint64 src, uint off, uint n)
 {

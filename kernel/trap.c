@@ -3,7 +3,10 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "spinlock.h"
+#include "sleeplock.h"
 #include "proc.h"
+#include "fs.h"
+#include "file.h"
 #include "defs.h"
 
 struct spinlock tickslock;
@@ -65,6 +68,52 @@ usertrap(void)
     intr_on();
 
     syscall();
+  } else if(r_scause() == 13 || r_scause() == 15){
+      int i;
+      uint64 va = r_stval();
+      struct proc *p = myproc();
+
+      if(va>=p->sz || va<p->trapframe->sp) {
+          p->killed = 1;
+          goto err;
+      }
+
+
+      for(i = 0;i < NVMA;i++){
+          struct VMA* v = &p->vma[i];
+          //如果va地址处在vma之间，进行懒分配物理内存
+          if(v->used && v->addr <= va && v->addr + v->len > va) {
+              char* mem;
+              mem = kalloc();
+              //you should clear pa
+              memset(mem,0,PGSIZE);
+              if(mem == 0) {
+                  p->killed = 1;
+                  panic("page fault: mem use out\n");
+                  break;
+              }
+              va = PGROUNDDOWN(va);
+              // PROT_READ=1 PROT_WRITE=2 PROT_EXEC=4
+              // PTE_R=2     PTE_W=4      PTE_X=8
+              // 所以需要将vma[i]->prot 左移一位
+              //set off in file equal to va - v->addr;
+              uint64 off = v->start_point + va - v->addr;
+              if(mappages(p->pagetable,va,PGSIZE,(uint64)mem,(v->prot<<1) | PTE_U) != 0){
+                  kfree(mem);
+                  p->killed = 1;
+                  break;
+              }
+
+              ilock(v->f->ip);
+              //1 is user vm
+              // Read data from inode， store in va.
+              readi(v->f->ip,1,va,off,PGSIZE);
+              iunlock(v->f->ip);
+              break;
+          }
+
+      }
+      if ( i == NVMA ) p->killed = 1;
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
@@ -72,7 +121,7 @@ usertrap(void)
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     p->killed = 1;
   }
-
+  err:
   if(p->killed)
     exit(-1);
 
